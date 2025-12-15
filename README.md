@@ -1,0 +1,5 @@
+# sukgame
+SUK
+
+
+SUK ADLI OYUN YAPIYORUZ GODOTLA
