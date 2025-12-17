@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="SkillDash" load_steps=2 format=3 uid="uid://dt38mhdhxphjl"]
+
+[ext_resource type="Script" uid="uid://b7qi2bwlivlh1" path="res://Scripts/Skills/SkillDash.cs" id="1_0qeku"]
+
+[resource]
+script = ExtResource("1_0qeku")
+Cooldown = 1.0
+metadata/_custom_type_script = "uid://b7qi2bwlivlh1"

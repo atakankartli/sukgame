@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="SkillTeleport" load_steps=2 format=3 uid="uid://drarbwcf6bcvp"]
+
+[ext_resource type="Script" uid="uid://dlntrp564d8ju" path="res://Scripts/Skills/SkillTeleport.cs" id="1_37mbr"]
+
+[resource]
+script = ExtResource("1_37mbr")
+Distance = 50.0
+Duration = 0.5
+Cooldown = 1.0
+metadata/_custom_type_script = "uid://dlntrp564d8ju"
