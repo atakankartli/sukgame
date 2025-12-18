@@ -8,5 +8,6 @@ public abstract partial class Skill : Resource
 	public void UpdateTimer(double delta) => CooldownTimer = Mathf.Max(0, CooldownTimer - (float)delta);
 	public bool IsReady => CooldownTimer <= 0;
 
-	public abstract bool Execute(Player player, Vector2 direction);
+	// Generalized: any Node2D can be a caster (Player, Enemy, etc.)
+	public abstract bool Execute(Node2D caster, Vector2 direction);
 }

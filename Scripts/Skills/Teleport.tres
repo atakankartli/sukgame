@@ -4,7 +4,6 @@
 
 [resource]
 script = ExtResource("1_37mbr")
-Distance = 50.0
-Duration = 0.5
+Distance = 75.0
 Cooldown = 1.0
 metadata/_custom_type_script = "uid://dlntrp564d8ju"

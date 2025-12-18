@@ -1,0 +1,71 @@
+[gd_scene load_steps=5 format=3 uid="uid://c2q48xapop3i"]
+
+[ext_resource type="Script" uid="uid://bq0jwstkdl8rb" path="res://Scripts/Hud.cs" id="1_hudscript"]
+[ext_resource type="Texture2D" uid="uid://drx4uyemadp5q" path="res://assets/dash.jpg" id="2_dashtex"]
+[ext_resource type="Texture2D" uid="uid://ckyj4nxuqecrg" path="res://assets/teleport.jpg" id="3_tptex"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_05u5g"]
+bg_color = Color(0.8235294, 0.52156866, 0.19215687, 0.73333335)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+
+[node name="HUD" type="CanvasLayer" node_paths=PackedStringArray("_cooldownOverlays", "_healthBar")]
+script = ExtResource("1_hudscript")
+_cooldownOverlays = [NodePath("SkillbarRoot/SkillHolder/SkillSlot1/TextureProgressBar"), NodePath("SkillbarRoot/SkillHolder/SkillSlot2/TextureProgressBar")]
+_healthBar = NodePath("HealthBar")
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+offset_left = 200.0
+offset_top = 468.0
+offset_right = 950.0
+offset_bottom = 495.0
+value = 100.0
+
+[node name="SkillbarRoot" type="Panel" parent="."]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 200.0
+offset_top = -148.0
+offset_right = -202.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_05u5g")
+
+[node name="SkillHolder" type="HBoxContainer" parent="SkillbarRoot"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 289.0
+offset_bottom = 137.0
+theme_override_constants/separation = 150
+
+[node name="SkillSlot1" type="TextureRect" parent="SkillbarRoot/SkillHolder"]
+layout_mode = 2
+stretch_mode = 5
+
+[node name="TextureProgressBar" type="TextureProgressBar" parent="SkillbarRoot/SkillHolder/SkillSlot1"]
+layout_mode = 0
+offset_right = 64.0
+offset_bottom = 64.0
+fill_mode = 2
+texture_under = ExtResource("2_dashtex")
+texture_progress = ExtResource("2_dashtex")
+tint_progress = Color(0, 0, 0, 0.78431374)
+
+[node name="SkillSlot2" type="TextureRect" parent="SkillbarRoot/SkillHolder"]
+layout_mode = 2
+stretch_mode = 5
+
+[node name="TextureProgressBar" type="TextureProgressBar" parent="SkillbarRoot/SkillHolder/SkillSlot2"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+fill_mode = 2
+texture_under = ExtResource("3_tptex")
+texture_progress = ExtResource("3_tptex")
+tint_progress = Color(0, 0, 0, 0.78431374)

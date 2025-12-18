@@ -3,11 +3,17 @@ using System;
 
 public partial class Player : CharacterBody2D
 {
+	// Optional: assign in the Inspector. If empty, Player will auto-find the first Hud in the current scene.
+	[Export] public NodePath HudPath;
 	private Hud _hud;
 	[Signal] public delegate void SkillActivatedEventHandler(int slot, float cooldown);
 
 	[Export] public float MoveSpeed = 60f;
 	[Export] public Skill[] Skills = new Skill[2]; // Slot 0 and Slot 1
+
+	[Signal] public delegate void HealthChangedEventHandler(float current, float max);
+	[Export] public float MaxHealth = 100f;
+	[Export] public float Health = 100f;
 
 	private AnimatedSprite2D _sprite;
 	
@@ -20,16 +26,65 @@ public partial class Player : CharacterBody2D
 	private Vector2 _velocityOverride;
 	private bool _tpTriggered;
 	private Vector2 _tpTarget;
+	private double _tpElapsed;
+	private float _tpDelaySeconds;
+	private float _tpTotalDurationSeconds;
 
 	public override void _Ready()
 	{
 		_sprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
-		// Get reference to HUD
-		_hud = GetNode<Hud>("../level0/HUD");
-		
-		// Connect the signal
-		SkillActivated += _hud.OnPlayerSkillActivated;
-		GD.Print("HUD connected successfully!");
+
+		// Initialize health
+		MaxHealth = Mathf.Max(1f, MaxHealth);
+		Health = Mathf.Clamp(Health, 0f, MaxHealth);
+
+		// Get reference to HUD (generalized)
+		_hud = ResolveHud();
+		if (_hud != null)
+		{
+			SkillActivated += _hud.OnPlayerSkillActivated;
+			HealthChanged += _hud.OnPlayerHealthChanged;
+			GD.Print("HUD connected successfully!");
+		}
+		else
+		{
+			GD.PrintErr("HUD not found. Cooldown UI won't update until a Hud exists in the scene.");
+		}
+
+		// Push initial health state to HUD
+		EmitSignal(SignalName.HealthChanged, Health, MaxHealth);
+	}
+
+	private Hud ResolveHud()
+	{
+		// 1) Prefer explicit NodePath (if assigned in Inspector)
+		if (HudPath != null && !HudPath.IsEmpty)
+		{
+			var byPath = GetNodeOrNull<Hud>(HudPath);
+			if (byPath != null) return byPath;
+		}
+
+		// 2) Fallback: search the current scene tree for the first Hud node
+		var root = GetTree()?.CurrentScene;
+		if (root == null) return null;
+
+		return FindFirstHud(root);
+	}
+
+	private static Hud FindFirstHud(Node node)
+	{
+		if (node is Hud hud) return hud;
+
+		foreach (var child in node.GetChildren())
+		{
+			if (child is Node childNode)
+			{
+				var found = FindFirstHud(childNode);
+				if (found != null) return found;
+			}
+		}
+
+		return null;
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -53,8 +108,17 @@ public partial class Player : CharacterBody2D
 			case State.Teleporting:
 				_stateTimer -= delta;
 				Velocity = Vector2.Zero;
-				if (_tpTriggered && _stateTimer <= 0.5) { GlobalPosition = _tpTarget; _tpTriggered = false; }
-				if (_stateTimer <= 0) _currentState = State.Idle;
+				_tpElapsed += delta;
+				if (_tpTriggered && _tpElapsed >= _tpDelaySeconds)
+				{
+					GlobalPosition = _tpTarget; 
+					_tpTriggered = false; 
+				}
+				// End the teleport state after the configured total duration
+				if (_tpElapsed >= _tpTotalDurationSeconds) 
+				{
+					_currentState = State.Idle;
+				}
 				break;
 		}
 	}
@@ -91,13 +155,30 @@ public partial class Player : CharacterBody2D
 		_stateTimer = time;
 	}
 
-	public void ApplyTeleport(Vector2 dir, float dist, float time)
+	public void ApplyTeleport(Vector2 dir, float dist, float delaySeconds, float totalDurationSeconds)
 	{
 		_currentState = State.Teleporting;
-		_stateTimer = time;
+		_stateTimer = totalDurationSeconds; // kept for your debug prints / existing pattern
 		_tpTriggered = true;
+		_tpElapsed = 0;
+		_tpDelaySeconds = delaySeconds;
+		_tpTotalDurationSeconds = Mathf.Max(delaySeconds, totalDurationSeconds);
 		_tpTarget = GlobalPosition + (dir * dist);
 		_sprite.Play("teleport");
+	}
+
+	public void Damage(float amount)
+	{
+		if (amount <= 0) return;
+		Health = Mathf.Clamp(Health - amount, 0f, MaxHealth);
+		EmitSignal(SignalName.HealthChanged, Health, MaxHealth);
+	}
+
+	public void Heal(float amount)
+	{
+		if (amount <= 0) return;
+		Health = Mathf.Clamp(Health + amount, 0f, MaxHealth);
+		EmitSignal(SignalName.HealthChanged, Health, MaxHealth);
 	}
 
 	private void PlayAnimation(Vector2 dir)

@@ -5,6 +5,15 @@ public partial class Hud : CanvasLayer
 {
 	// Link these to the TextureProgressBars in the Inspector
 	[Export] private TextureProgressBar[] _cooldownOverlays;
+	// Link this to the ProgressBar in the Inspector
+	[Export] private ProgressBar _healthBar;
+
+	public void OnPlayerHealthChanged(float current, float max)
+	{
+		if (_healthBar == null) return;
+		_healthBar.MaxValue = max;
+		_healthBar.Value = current;
+	}
 
 	public void OnPlayerSkillActivated(int slot, float cooldown)
 	{
