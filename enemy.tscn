@@ -1,6 +1,6 @@
-[gd_scene load_steps=10 format=3 uid="uid://cd85jmx5h26j"]
+[gd_scene load_steps=11 format=3 uid="uid://cd85jmx5h26j"]
 
-[ext_resource type="Script" uid="uid://dugngevmdcqpk" path="res://Enemy.cs" id="1_4gyqm"]
+[ext_resource type="Script" uid="uid://dugngevmdcqpk" path="res://Scripts/Enemy.cs" id="1_4gyqm"]
 [ext_resource type="Texture2D" uid="uid://c4am1a6c0u8uq" path="res://assets/aseprite/enemy_idle.png" id="1_7k104"]
 [ext_resource type="Resource" uid="uid://cyrd1c4wq0k2p" path="res://Scripts/Skills/Fireball.tres" id="2_fireball_skill"]
 
@@ -53,7 +53,6 @@ size = Vector2(14, 3)
 [node name="enemy" type="CharacterBody2D"]
 script = ExtResource("1_4gyqm")
 AttackSkill = ExtResource("2_fireball_skill")
-FireDirection = Vector2(-1, 0)
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 position = Vector2(0, -8)

@@ -11,7 +11,7 @@ border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 
-[node name="HUD" type="CanvasLayer" node_paths=PackedStringArray("_cooldownOverlays", "_healthBar")]
+[node name="HUD" type="CanvasLayer" node_paths=PackedStringArray("_cooldownOverlays", "_healthBar") groups=["hud"]]
 script = ExtResource("1_hudscript")
 _cooldownOverlays = [NodePath("SkillbarRoot/SkillHolder/SkillSlot1/TextureProgressBar"), NodePath("SkillbarRoot/SkillHolder/SkillSlot2/TextureProgressBar")]
 _healthBar = NodePath("HealthBar")
