@@ -10,6 +10,7 @@ public partial class Player : CharacterBody2D
 
 	[Export] public float MoveSpeed = 60f;
 	[Export] public Skill[] Skills = new Skill[2]; // Slot 0 and Slot 1
+	private float[] _skillCooldowns;
 
 	[Signal] public delegate void HealthChangedEventHandler(float current, float max);
 	[Export] public float MaxHealth = 100f;
@@ -37,6 +38,8 @@ public partial class Player : CharacterBody2D
 		// Initialize health
 		MaxHealth = Mathf.Max(1f, MaxHealth);
 		Health = Mathf.Clamp(Health, 0f, MaxHealth);
+
+		_skillCooldowns = new float[Skills.Length];
 
 		// Get reference to HUD (generalized)
 		_hud = ResolveHud();
@@ -89,8 +92,11 @@ public partial class Player : CharacterBody2D
 
 	public override void _PhysicsProcess(double delta)
 	{
-		// 1. Update internal skill timers
-		foreach (var s in Skills) s?.UpdateTimer(delta);
+		// 1. Update cooldown timers (stored on the player, not on the Skill resource)
+		for (int i = 0; i < _skillCooldowns.Length; i++)
+		{
+			_skillCooldowns[i] = Mathf.Max(0, _skillCooldowns[i] - (float)delta);
+		}
 
 		// 2. Handle Logic based on State
 		switch (_currentState)
@@ -139,10 +145,13 @@ public partial class Player : CharacterBody2D
 		Vector2 input = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down").Normalized();
 		for (int i = 0; i < Skills.Length; i++)
 		{
-			if (Input.IsActionJustPressed($"skill{i + 1}") && Skills[i] != null && Skills[i].IsReady)
+			if (Input.IsActionJustPressed($"skill{i + 1}") && Skills[i] != null && _skillCooldowns[i] <= 0)
 			{
 				if (Skills[i].Execute(this, input))
+				{
+					_skillCooldowns[i] = Skills[i].Cooldown;
 					EmitSignal(SignalName.SkillActivated, i, Skills[i].Cooldown);
+				}
 			}
 		}
 	}

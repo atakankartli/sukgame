@@ -4,6 +4,7 @@ using System;
 public partial class Enemy : CharacterBody2D
 {
 	private AnimatedSprite2D _sprite;
+	private float _attackCooldown;
 
 	// Generalized skill resource (assign Fireball.tres here)
 	[Export] public Skill AttackSkill;
@@ -20,12 +21,15 @@ public partial class Enemy : CharacterBody2D
 	{
 		if (AttackSkill == null) return;
 
-		AttackSkill.UpdateTimer(delta);
-		if (!AttackSkill.IsReady) return;
+		_attackCooldown = Mathf.Max(0, _attackCooldown - (float)delta);
+		if (_attackCooldown > 0) return;
 
 		var dir = FireDirection.Normalized();
 		if (dir == Vector2.Zero) return;
 
-		AttackSkill.Execute(this, dir);
+		if (AttackSkill.Execute(this, dir))
+		{
+			_attackCooldown = AttackSkill.Cooldown;
+		}
 	}
 }

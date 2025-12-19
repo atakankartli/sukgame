@@ -14,7 +14,6 @@ public partial class SkillTeleport : Skill
 		if (direction == Vector2.Zero) return false;
 		if (caster is not Player player) return false;
 		player.ApplyTeleport(direction, this.Distance, this.DelaySeconds, this.Duration);
-		CooldownTimer = Cooldown;
 		return true;
 	}
 }

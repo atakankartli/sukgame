@@ -11,7 +11,6 @@ public partial class SkillDash : Skill
 		if (direction == Vector2.Zero) return false;
 		if (caster is not Player player) return false;
 		player.ApplyDash(direction, this.Speed, this.Duration);
-		CooldownTimer = Cooldown;
 		return true;
 	}
 }

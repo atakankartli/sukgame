@@ -21,7 +21,6 @@ public partial class SkillFireball : Skill
 		fireball.GlobalPosition = caster.GlobalPosition;
 		fireball.Initialize(caster, direction, Speed, Damage, LifetimeSeconds);
 
-		CooldownTimer = Cooldown;
 		return true;
 	}
 }
