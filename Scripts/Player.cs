@@ -132,15 +132,21 @@ public partial class Player : CharacterBody2D
 
 	private void HandleInput()
 	{
-		Vector2 input = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down").Normalized();
+		Vector2 moveInput = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down").Normalized();
+		Vector2 mouseDir = (GetGlobalMousePosition() - GlobalPosition).Normalized();
+
 		for (int i = 0; i < Skills.Length; i++)
 		{
 			if (Input.IsActionJustPressed($"skill{i + 1}") && Skills[i] != null && _skillCooldowns[i] <= 0)
 			{
-				if (Skills[i].Execute(this, input))
+				var skill = Skills[i];
+				Vector2 dir = skill.AimSource == SkillAimSource.Mouse ? mouseDir : moveInput;
+				if (dir == Vector2.Zero) continue;
+
+				if (skill.Execute(this, dir))
 				{
-					_skillCooldowns[i] = Skills[i].Cooldown;
-					EmitSignal(SignalName.SkillActivated, i, Skills[i].Cooldown);
+					_skillCooldowns[i] = skill.Cooldown;
+					EmitSignal(SignalName.SkillActivated, i, skill.Cooldown);
 				}
 			}
 		}

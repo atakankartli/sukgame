@@ -1,14 +1,10 @@
 [gd_resource type="Resource" script_class="SkillFireball" load_steps=3 format=3 uid="uid://cyrd1c4wq0k2p"]
 
-[ext_resource type="Script" path="res://Scripts/Skills/SkillFireball.cs" id="1_skill"]
-[ext_resource type="PackedScene" path="res://fireball.tscn" id="2_scene"]
+[ext_resource type="Script" uid="uid://pongf8m0256r" path="res://Scripts/Skills/SkillFireball.cs" id="1_skill"]
+[ext_resource type="PackedScene" uid="uid://c5m1x6c1n2f4a" path="res://fireball.tscn" id="2_scene"]
 
 [resource]
 script = ExtResource("1_skill")
 FireballScene = ExtResource("2_scene")
-Speed = 260.0
-Damage = 10.0
-LifetimeSeconds = 1.5
+AimSource = 1
 Cooldown = 0.6
-
-
