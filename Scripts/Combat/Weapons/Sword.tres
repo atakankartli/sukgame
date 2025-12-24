@@ -1,21 +1,15 @@
-[gd_resource type="Resource" script_class="Weapon" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="Weapon" load_steps=2 format=3 uid="uid://bv8ixlotj34gt"]
 
-[ext_resource type="Script" path="res://Scripts/Combat/Weapons/Weapon.cs" id="1_weapon"]
+[ext_resource type="Script" uid="uid://bsg0d3l3udfga" path="res://Scripts/Combat/Weapons/Weapon.cs" id="1_weapon"]
 
 [resource]
 script = ExtResource("1_weapon")
 WeaponName = "Iron Sword"
 BaseDamage = 15.0
-DamageType = 0
 KnockbackForce = 100.0
 PoiseDamage = 20.0
-CanCrit = true
-AttackSpeed = 1.0
-StaminaCost = 20.0
 WindUpTime = 0.08
 ActiveTime = 0.12
 RecoveryTime = 0.25
 HitboxSize = Vector2(28, 14)
 HitboxDistance = 18.0
-AttackAnimationPrefix = "attack"
-

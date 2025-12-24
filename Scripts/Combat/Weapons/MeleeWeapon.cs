@@ -54,6 +54,11 @@ public partial class MeleeWeapon : Node2D
 	
 	// Swing animation
 	private Tween _swingTween;
+	
+	// Store the original visual setup from the scene (set in editor)
+	private Vector2 _originalHitboxPosition;
+	private Vector2 _originalShapePosition;
+	private float _originalHitboxRotation;
 
 	private enum AttackPhase
 	{
@@ -112,7 +117,17 @@ public partial class MeleeWeapon : Node2D
 		{
 			// Found a proper Hitbox, get its shape
 			_hitboxShape = _hitbox.GetNodeOrNull<CollisionShape2D>("HitboxShape");
-			GD.Print("Found existing Hitbox with script");
+			
+			// IMPORTANT: Store the original visual positions set in the editor!
+			// These define the "Right" direction attack hitbox
+			_originalHitboxPosition = _hitbox.Position;
+			_originalHitboxRotation = _hitbox.Rotation;
+			if (_hitboxShape != null)
+			{
+				_originalShapePosition = _hitboxShape.Position;
+			}
+			
+			GD.Print($"Found existing Hitbox - Original pos: {_originalHitboxPosition}, Shape pos: {_originalShapePosition}");
 		}
 		else
 		{
@@ -147,6 +162,11 @@ public partial class MeleeWeapon : Node2D
 			_hitboxShape.Name = "HitboxShape";
 			_hitboxShape.Disabled = true;
 			_hitbox.AddChild(_hitboxShape);
+			
+			// Store defaults
+			_originalHitboxPosition = Vector2.Zero;
+			_originalShapePosition = Vector2.Zero;
+			_originalHitboxRotation = 0;
 			
 			GD.Print("Hitbox created with Layer=8, Mask=4");
 		}
@@ -270,38 +290,55 @@ public partial class MeleeWeapon : Node2D
 
 	private void PositionHitbox(AttackDirection direction)
 	{
-		if (_hitbox == null || EquippedWeapon == null) return;
+		if (_hitbox == null) return;
 		
-		float distance = EquippedWeapon.HitboxDistance;
-		Vector2 size = EquippedWeapon.HitboxSize;
+		// Use the VISUAL positions set in the editor!
+		// The editor setup defines the "Right" direction attack
+		// We transform it for other directions
 		
-		// Position and rotate hitbox based on direction
+		// Calculate total offset from player center (hitbox pos + shape pos)
+		Vector2 totalOffset = _originalHitboxPosition + _originalShapePosition;
+		
+		// The X component is "forward" distance, Y component is height offset
+		float forwardDist = Mathf.Abs(totalOffset.X);  // How far in front (12)
+		float heightOffset = totalOffset.Y;            // Vertical offset (-6)
+		
+		Vector2 finalShapePos;
+		
 		switch (direction)
 		{
 			case AttackDirection.Right:
-				_hitbox.Position = new Vector2(distance, 0);
-				_hitbox.Rotation = 0;
+				// Forward is +X, keep height offset
+				finalShapePos = new Vector2(forwardDist, heightOffset);
 				break;
+				
 			case AttackDirection.Left:
-				_hitbox.Position = new Vector2(-distance, 0);
-				_hitbox.Rotation = Mathf.Pi;
+				// Forward is -X, keep height offset
+				finalShapePos = new Vector2(-forwardDist, heightOffset);
 				break;
+				
 			case AttackDirection.Up:
-				_hitbox.Position = new Vector2(0, -distance);
-				_hitbox.Rotation = -Mathf.Pi / 2;
+				// Forward is -Y (up in Godot), center horizontally
+				finalShapePos = new Vector2(0, -forwardDist);
 				break;
+				
 			case AttackDirection.Down:
-				_hitbox.Position = new Vector2(0, distance);
-				_hitbox.Rotation = Mathf.Pi / 2;
+				// Forward is +Y (down in Godot), center horizontally
+				finalShapePos = new Vector2(0, forwardDist);
+				break;
+				
+			default:
+				finalShapePos = totalOffset;
 				break;
 		}
 		
-		// Update hitbox shape size
+		// Keep hitbox at origin, move the shape
+		_hitbox.Position = Vector2.Zero;
+		_hitbox.Rotation = 0;
+		
 		if (_hitboxShape != null)
 		{
-			var rect = new RectangleShape2D();
-			rect.Size = size;
-			_hitboxShape.Shape = rect;
+			_hitboxShape.Position = finalShapePos;
 		}
 	}
 
@@ -459,6 +496,18 @@ public partial class MeleeWeapon : Node2D
 			_weaponSprite.Position = WeaponSpriteOffset;
 			_weaponSprite.Rotation = 0;
 			_weaponSprite.FlipH = false;
+		}
+		
+		// Reset hitbox to original visual position (what you set in editor)
+		if (_hitbox != null)
+		{
+			_hitbox.Position = Vector2.Zero;
+			_hitbox.Rotation = 0;
+		}
+		if (_hitboxShape != null)
+		{
+			// Reset to original combined position for "Right" direction
+			_hitboxShape.Position = _originalHitboxPosition + _originalShapePosition;
 		}
 		
 		// Reset animation speed
