@@ -1,4 +1,5 @@
 using Godot;
+using Combat;
 
 public partial class Fireball : Area2D
 {
@@ -7,9 +8,9 @@ public partial class Fireball : Area2D
 	private float _damage;
 	private float _lifeSeconds;
 	private float _age;
-	private Node _owner;
+	private Node2D _owner;
 
-	public void Initialize(Node owner, Vector2 direction, float speed, float damage, float lifetimeSeconds)
+	public void Initialize(Node2D owner, Vector2 direction, float speed, float damage, float lifetimeSeconds)
 	{
 		_owner = owner;
 		_direction = direction.Normalized();
@@ -17,7 +18,7 @@ public partial class Fireball : Area2D
 		_damage = damage;
 		_lifeSeconds = lifetimeSeconds;
 
-		// Point the fireball in the movement direction (optional)
+		// Point the fireball in the movement direction
 		if (_direction != Vector2.Zero)
 			Rotation = _direction.Angle();
 	}
@@ -25,6 +26,7 @@ public partial class Fireball : Area2D
 	public override void _Ready()
 	{
 		BodyEntered += OnBodyEntered;
+		AreaEntered += OnAreaEntered;
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -48,12 +50,38 @@ public partial class Fireball : Area2D
 		if (_owner != null && body == _owner)
 			return;
 
-		// Generic damage call: any node with a Damage(float) method can be hit.
+		// Try new damage system first (IDamageable)
+		if (body is IDamageable damageable)
+		{
+			var damageInfo = DamageInfo.Elemental(_damage, DamageType.Fire, _owner, _direction, 80f);
+			damageable.TakeDamage(damageInfo);
+			QueueFree();
+			return;
+		}
+
+		// Fallback: Legacy damage method for backwards compatibility
 		if (body.HasMethod("Damage"))
 		{
 			body.Call("Damage", _damage);
 		}
 
 		QueueFree();
+	}
+
+	private void OnAreaEntered(Area2D area)
+	{
+		// Check for Hurtbox (new system)
+		if (area is Hurtbox hurtbox)
+		{
+			var ownerEntity = hurtbox.GetOwnerEntity();
+			
+			// Don't hit the spawner
+			if (_owner != null && ownerEntity == _owner)
+				return;
+
+			var damageInfo = DamageInfo.Elemental(_damage, DamageType.Fire, _owner, _direction, 80f);
+			hurtbox.ReceiveDamage(damageInfo);
+			QueueFree();
+		}
 	}
 }

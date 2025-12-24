@@ -1,8 +1,12 @@
-[gd_scene load_steps=11 format=3 uid="uid://cd85jmx5h26j"]
+[gd_scene load_steps=16 format=3 uid="uid://cd85jmx5h26j"]
 
 [ext_resource type="Script" uid="uid://dugngevmdcqpk" path="res://Scripts/Enemy.cs" id="1_4gyqm"]
 [ext_resource type="Texture2D" uid="uid://c4am1a6c0u8uq" path="res://assets/aseprite/enemy_idle.png" id="1_7k104"]
 [ext_resource type="Resource" uid="uid://cyrd1c4wq0k2p" path="res://Scripts/Skills/Fireball.tres" id="2_fireball_skill"]
+[ext_resource type="Script" uid="uid://bup7jcc88l3r0" path="res://Scripts/Combat/CombatStats.cs" id="4_wujgv"]
+[ext_resource type="Script" uid="uid://d2bmk8pkgusnu" path="res://Scripts/Combat/KnockbackReceiver.cs" id="5_hb8ge"]
+[ext_resource type="Script" uid="uid://jd0rm5e4e0s" path="res://Scripts/Combat/HitFeedback.cs" id="6_e1ltt"]
+[ext_resource type="Script" uid="uid://b3s5slc35xy2e" path="res://Scripts/Combat/Hurtbox.cs" id="7_dxifv"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4gyqm"]
 atlas = ExtResource("1_7k104")
@@ -50,6 +54,9 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_7k104"]
 size = Vector2(14, 3)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wujgv"]
+size = Vector2(13, 3)
+
 [node name="enemy" type="CharacterBody2D"]
 script = ExtResource("1_4gyqm")
 AttackSkill = ExtResource("2_fireball_skill")
@@ -62,3 +69,19 @@ animation = &"idle"
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, 5.5)
 shape = SubResource("RectangleShape2D_7k104")
+
+[node name="CombatStats" type="Node" parent="."]
+script = ExtResource("4_wujgv")
+
+[node name="KnockbackReceiver" type="Node" parent="."]
+script = ExtResource("5_hb8ge")
+
+[node name="HitFeedback" type="Node" parent="."]
+script = ExtResource("6_e1ltt")
+
+[node name="Hurtbox" type="Area2D" parent="."]
+script = ExtResource("7_dxifv")
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, 5)
+shape = SubResource("RectangleShape2D_wujgv")

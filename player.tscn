@@ -1,4 +1,4 @@
-[gd_scene load_steps=48 format=3 uid="uid://bogqd131up00w"]
+[gd_scene load_steps=54 format=3 uid="uid://bogqd131up00w"]
 
 [ext_resource type="Texture2D" uid="uid://b0ve6qneluinv" path="res://assets/aseprite/player_blob.png" id="1_4flbx"]
 [ext_resource type="Script" uid="uid://ds3rdnbr6jxsp" path="res://Scripts/Player.cs" id="2_onrkg"]
@@ -6,6 +6,11 @@
 [ext_resource type="Texture2D" uid="uid://bl2w0f0oflq8q" path="res://assets/aseprite/player_teleport.png" id="3_i3pqv"]
 [ext_resource type="Resource" uid="uid://cyrd1c4wq0k2p" path="res://Scripts/Skills/Fireball.tres" id="3_sweqy"]
 [ext_resource type="Texture2D" uid="uid://blbarntgapxly" path="res://assets/aseprite/player_die.png" id="4_1jxqw"]
+[ext_resource type="Script" uid="uid://bup7jcc88l3r0" path="res://Scripts/Combat/CombatStats.cs" id="7_n7ghd"]
+[ext_resource type="Script" uid="uid://d2bmk8pkgusnu" path="res://Scripts/Combat/KnockbackReceiver.cs" id="8_nvl01"]
+[ext_resource type="Script" uid="uid://jd0rm5e4e0s" path="res://Scripts/Combat/HitFeedback.cs" id="9_ivps1"]
+[ext_resource type="Script" uid="uid://bt16bj5nr4oli" path="res://Scripts/Combat/DamageVignette.cs" id="10_nvl01"]
+[ext_resource type="Script" uid="uid://b3s5slc35xy2e" path="res://Scripts/Combat/Hurtbox.cs" id="10_urp6f"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ek41f"]
 atlas = ExtResource("4_1jxqw")
@@ -319,6 +324,9 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_7ahtn"]
 size = Vector2(14, 4)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_n7ghd"]
+size = Vector2(15, 5)
+
 [node name="Player" type="CharacterBody2D"]
 script = ExtResource("2_onrkg")
 Skills = [ExtResource("3_2hs0m"), ExtResource("3_sweqy")]
@@ -331,6 +339,26 @@ animation = &"die"
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, 5)
 shape = SubResource("RectangleShape2D_7ahtn")
+
+[node name="CombatStats" type="Node" parent="."]
+script = ExtResource("7_n7ghd")
+
+[node name="KnockbackReceiver" type="Node" parent="."]
+script = ExtResource("8_nvl01")
+
+[node name="HitFeedback" type="Node" parent="."]
+script = ExtResource("9_ivps1")
+
+[node name="DamageVignette" type="CanvasLayer" parent="."]
+script = ExtResource("10_nvl01")
+VignetteColor = Color(0, 0.44705883, 0, 1)
+
+[node name="Hurtbox" type="Area2D" parent="."]
+script = ExtResource("10_urp6f")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, 5)
+shape = SubResource("RectangleShape2D_n7ghd")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(3, 3)
