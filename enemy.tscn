@@ -56,7 +56,7 @@ animations = [{
 size = Vector2(14, 3)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wujgv"]
-size = Vector2(13, 3)
+size = Vector2(12.5, 13.25)
 
 [node name="enemy" type="CharacterBody2D"]
 script = ExtResource("1_4gyqm")
@@ -84,8 +84,10 @@ script = ExtResource("6_e1ltt")
 script = ExtResource("7_hb8ge")
 
 [node name="Hurtbox" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 0
 script = ExtResource("7_dxifv")
 
 [node name="CollisionShape2D2" type="CollisionShape2D" parent="Hurtbox"]
-position = Vector2(0, 5)
+position = Vector2(0, -0.625)
 shape = SubResource("RectangleShape2D_wujgv")

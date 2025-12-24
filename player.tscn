@@ -1,4 +1,4 @@
-[gd_scene load_steps=54 format=3 uid="uid://bogqd131up00w"]
+[gd_scene load_steps=56 format=3 uid="uid://bogqd131up00w"]
 
 [ext_resource type="Texture2D" uid="uid://b0ve6qneluinv" path="res://assets/aseprite/player_blob.png" id="1_4flbx"]
 [ext_resource type="Script" uid="uid://ds3rdnbr6jxsp" path="res://Scripts/Player.cs" id="2_onrkg"]
@@ -6,11 +6,13 @@
 [ext_resource type="Texture2D" uid="uid://bl2w0f0oflq8q" path="res://assets/aseprite/player_teleport.png" id="3_i3pqv"]
 [ext_resource type="Resource" uid="uid://cyrd1c4wq0k2p" path="res://Scripts/Skills/Fireball.tres" id="3_sweqy"]
 [ext_resource type="Texture2D" uid="uid://blbarntgapxly" path="res://assets/aseprite/player_die.png" id="4_1jxqw"]
+[ext_resource type="PackedScene" uid="uid://cj17j756qf08f" path="res://melee_weapon.tscn" id="7_ivps1"]
 [ext_resource type="Script" uid="uid://bup7jcc88l3r0" path="res://Scripts/Combat/CombatStats.cs" id="7_n7ghd"]
 [ext_resource type="Script" uid="uid://d2bmk8pkgusnu" path="res://Scripts/Combat/KnockbackReceiver.cs" id="8_nvl01"]
 [ext_resource type="Script" uid="uid://jd0rm5e4e0s" path="res://Scripts/Combat/HitFeedback.cs" id="9_ivps1"]
 [ext_resource type="Script" uid="uid://bt16bj5nr4oli" path="res://Scripts/Combat/DamageVignette.cs" id="10_nvl01"]
 [ext_resource type="Script" uid="uid://b3s5slc35xy2e" path="res://Scripts/Combat/Hurtbox.cs" id="10_urp6f"]
+[ext_resource type="Resource" path="res://Scripts/Combat/Weapons/Sword.tres" id="13_urp6f"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ek41f"]
 atlas = ExtResource("4_1jxqw")
@@ -362,3 +364,6 @@ shape = SubResource("RectangleShape2D_n7ghd")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(3, 3)
+
+[node name="MeleeWeapon" parent="." instance=ExtResource("7_ivps1")]
+EquippedWeapon = ExtResource("13_urp6f")

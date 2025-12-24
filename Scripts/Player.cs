@@ -1,5 +1,6 @@
 using Godot;
 using Combat;
+using Combat.Weapons;
 
 public partial class Player : CharacterBody2D, IDamageable
 {
@@ -17,6 +18,7 @@ public partial class Player : CharacterBody2D, IDamageable
 	private AnimatedSprite2D _sprite;
 	private CombatStats _combatStats;
 	private KnockbackReceiver _knockback;
+	private MeleeWeapon _meleeWeapon;
 	#endregion
 
 	#region Signals
@@ -25,9 +27,15 @@ public partial class Player : CharacterBody2D, IDamageable
 	#endregion
 
 	#region State Machine
-	private enum State { Idle, Dashing, Teleporting, Staggered, Dead }
+	private enum State { Idle, Attacking, Dashing, Teleporting, Staggered, Dead }
 	private State _currentState = State.Idle;
 	private double _stateTimer;
+	#endregion
+
+	#region Facing Direction
+	/// <summary>Last direction the player was facing (for attacks when stationary).</summary>
+	private Vector2 _facingDirection = Vector2.Right;
+	private AttackDirection _lastAttackDirection = AttackDirection.Right;
 	#endregion
 
 	#region Dash/Teleport State
@@ -74,6 +82,13 @@ public partial class Player : CharacterBody2D, IDamageable
 
 		// Find knockback receiver
 		_knockback = GetNodeOrNull<KnockbackReceiver>("KnockbackReceiver");
+
+		// Find melee weapon component
+		_meleeWeapon = GetNodeOrNull<MeleeWeapon>("MeleeWeapon");
+		if (_meleeWeapon != null)
+		{
+			_meleeWeapon.AttackEnded += OnAttackEnded;
+		}
 
 		_skillCooldowns = new float[Skills.Length];
 
@@ -135,6 +150,12 @@ public partial class Player : CharacterBody2D, IDamageable
 				HandleInput();
 				break;
 				
+			case State.Attacking:
+				// Can't move during attack (Souls-like commitment)
+				Velocity = Vector2.Zero;
+				// MeleeWeapon handles timing, we just wait for AttackEnded signal
+				break;
+				
 			case State.Dashing:
 				_stateTimer -= delta;
 				Velocity = _velocityOverride;
@@ -179,14 +200,30 @@ public partial class Player : CharacterBody2D, IDamageable
 		Vector2 input = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down").Normalized();
 		Velocity = input * MoveSpeed;
 
-		if (input != Vector2.Zero) PlayAnimation(input);
-		else _sprite.Play("idle");
+		if (input != Vector2.Zero)
+		{
+			// Update facing direction when moving
+			_facingDirection = input;
+			_lastAttackDirection = MeleeWeapon.GetDirectionFromVector(input);
+			PlayAnimation(input);
+		}
+		else
+		{
+			_sprite.Play("idle");
+		}
 
 		MoveAndSlide();
 	}
 
 	private void HandleInput()
 	{
+		// --- Melee Attack (Left Mouse Button) ---
+		if (Input.IsActionJustPressed("attack"))
+		{
+			TryMeleeAttack();
+		}
+
+		// --- Skills (Keys 1 and 2) ---
 		Vector2 moveInput = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down").Normalized();
 		Vector2 mouseDir = (GetGlobalMousePosition() - GlobalPosition).Normalized();
 
@@ -207,10 +244,47 @@ public partial class Player : CharacterBody2D, IDamageable
 		}
 	}
 
+	private void TryMeleeAttack()
+	{
+		if (_meleeWeapon == null) return;
+		if (_currentState != State.Idle) return;
+
+		// Determine attack direction: prefer mouse direction, fallback to facing
+		Vector2 mouseDir = (GetGlobalMousePosition() - GlobalPosition).Normalized();
+		AttackDirection attackDir;
+		
+		if (mouseDir != Vector2.Zero)
+		{
+			attackDir = MeleeWeapon.GetDirectionFromVector(mouseDir);
+		}
+		else
+		{
+			attackDir = _lastAttackDirection;
+		}
+
+		// Try to start the attack
+		if (_meleeWeapon.Attack(attackDir))
+		{
+			_currentState = State.Attacking;
+			_lastAttackDirection = attackDir;
+		}
+	}
+
+	private void OnAttackEnded()
+	{
+		// Return to idle when attack animation/timing completes
+		if (_currentState == State.Attacking)
+		{
+			_currentState = State.Idle;
+		}
+	}
+
 	#region Capability Methods (Called by Skills)
 	public void ApplyDash(Vector2 dir, float speed, float time)
 	{
 		if (_currentState == State.Dead) return;
+		if (_currentState == State.Attacking) return; // Can't dash during attack
+		
 		_currentState = State.Dashing;
 		_velocityOverride = dir * speed;
 		_stateTimer = time;
@@ -222,6 +296,8 @@ public partial class Player : CharacterBody2D, IDamageable
 	public void ApplyTeleport(Vector2 dir, float dist, float delaySeconds, float totalDurationSeconds)
 	{
 		if (_currentState == State.Dead) return;
+		if (_currentState == State.Attacking) return; // Can't teleport during attack
+		
 		_currentState = State.Teleporting;
 		_stateTimer = totalDurationSeconds;
 		_tpTriggered = true;
@@ -327,6 +403,9 @@ public partial class Player : CharacterBody2D, IDamageable
 
 	private void PlayAnimation(Vector2 dir)
 	{
+		// Don't override attack animations
+		if (_currentState == State.Attacking) return;
+		
 		if (Mathf.Abs(dir.X) > Mathf.Abs(dir.Y)) _sprite.Play(dir.X > 0 ? "walk_r" : "walk_l");
 		else _sprite.Play("walk_u_d");
 	}
