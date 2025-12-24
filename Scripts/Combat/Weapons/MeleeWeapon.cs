@@ -24,6 +24,16 @@ public partial class MeleeWeapon : Node2D
 	
 	/// <summary>Offset for the weapon sprite (adjust to position sword in player's hand).</summary>
 	[Export] public Vector2 WeaponSpriteOffset { get; set; } = new Vector2(8, -8);
+	
+	[ExportGroup("Swing Animation")]
+	/// <summary>Starting angle of the swing (degrees).</summary>
+	[Export] public float SwingStartAngle { get; set; } = -90f;
+	
+	/// <summary>Ending angle of the swing (degrees).</summary>
+	[Export] public float SwingEndAngle { get; set; } = 45f;
+	
+	/// <summary>How much the sword moves forward during swing.</summary>
+	[Export] public float SwingLungeDistance { get; set; } = 4f;
 	#endregion
 
 	#region State
@@ -41,6 +51,9 @@ public partial class MeleeWeapon : Node2D
 	// Timing
 	private float _attackTimer;
 	private AttackPhase _currentPhase = AttackPhase.None;
+	
+	// Swing animation
+	private Tween _swingTween;
 
 	private enum AttackPhase
 	{
@@ -207,10 +220,10 @@ public partial class MeleeWeapon : Node2D
 		// Update hitbox stats from weapon
 		UpdateHitboxStats();
 		
-		// Rotate weapon sprite to match attack direction
-		UpdateWeaponSpriteDirection(direction);
+		// Play the sword swing animation
+		PlaySwingAnimation(direction);
 		
-		// Play attack animation if available
+		// Play attack animation if available (player sprite)
 		PlayAttackAnimation(direction);
 		
 		EmitSignal(SignalName.AttackStarted, (int)direction);
@@ -318,34 +331,103 @@ public partial class MeleeWeapon : Node2D
 		_hitbox.Deactivate();
 	}
 
-	private void UpdateWeaponSpriteDirection(AttackDirection direction)
+	private void PlaySwingAnimation(AttackDirection direction)
 	{
 		if (_weaponSprite == null) return;
+		if (EquippedWeapon == null) return;
 		
-		// Rotate and flip weapon sprite based on direction
-		switch (direction)
+		// Kill any existing swing tween
+		_swingTween?.Kill();
+		
+		// Calculate total swing duration (wind-up + active)
+		float swingDuration = (EquippedWeapon.WindUpTime + EquippedWeapon.ActiveTime) / EquippedWeapon.AttackSpeed;
+		
+		// Get direction-specific values
+		float baseRotation = GetBaseRotationForDirection(direction);
+		float startAngle = Mathf.DegToRad(SwingStartAngle);
+		float endAngle = Mathf.DegToRad(SwingEndAngle);
+		Vector2 basePos = GetBasePositionForDirection(direction);
+		Vector2 lungeDir = GetLungeDirectionForDirection(direction);
+		bool flipH = (direction == AttackDirection.Left);
+		
+		// If attacking left, mirror the swing angles
+		if (direction == AttackDirection.Left)
 		{
-			case AttackDirection.Right:
-				_weaponSprite.Position = new Vector2(Mathf.Abs(WeaponSpriteOffset.X), WeaponSpriteOffset.Y);
-				_weaponSprite.FlipH = false;
-				_weaponSprite.Rotation = 0;
-				break;
-			case AttackDirection.Left:
-				_weaponSprite.Position = new Vector2(-Mathf.Abs(WeaponSpriteOffset.X), WeaponSpriteOffset.Y);
-				_weaponSprite.FlipH = true;
-				_weaponSprite.Rotation = 0;
-				break;
-			case AttackDirection.Up:
-				_weaponSprite.Position = new Vector2(0, WeaponSpriteOffset.Y - 4);
-				_weaponSprite.FlipH = false;
-				_weaponSprite.Rotation = -Mathf.Pi / 2;
-				break;
-			case AttackDirection.Down:
-				_weaponSprite.Position = new Vector2(0, -WeaponSpriteOffset.Y + 4);
-				_weaponSprite.FlipH = false;
-				_weaponSprite.Rotation = Mathf.Pi / 2;
-				break;
+			startAngle = -startAngle;
+			endAngle = -endAngle;
 		}
+		// If attacking up/down, adjust angles
+		if (direction == AttackDirection.Up || direction == AttackDirection.Down)
+		{
+			startAngle = Mathf.DegToRad(direction == AttackDirection.Up ? -45f : 45f);
+			endAngle = Mathf.DegToRad(direction == AttackDirection.Up ? 45f : -45f);
+		}
+		
+		// Set initial state
+		_weaponSprite.Position = basePos;
+		_weaponSprite.Rotation = baseRotation + startAngle;
+		_weaponSprite.FlipH = flipH;
+		_weaponSprite.Visible = true;
+		
+		// Create swing tween
+		_swingTween = CreateTween();
+		_swingTween.SetEase(Tween.EaseType.Out);
+		_swingTween.SetTrans(Tween.TransitionType.Cubic);
+		
+		// Animate rotation (the swing arc)
+		_swingTween.TweenProperty(_weaponSprite, "rotation", baseRotation + endAngle, swingDuration);
+		
+		// Animate position (lunge forward slightly) - parallel with rotation
+		_swingTween.Parallel().TweenProperty(
+			_weaponSprite, 
+			"position", 
+			basePos + lungeDir * SwingLungeDistance, 
+			swingDuration * 0.5f
+		);
+		
+		// Then return position
+		_swingTween.TweenProperty(
+			_weaponSprite, 
+			"position", 
+			basePos, 
+			swingDuration * 0.5f
+		);
+	}
+	
+	private float GetBaseRotationForDirection(AttackDirection direction)
+	{
+		return direction switch
+		{
+			AttackDirection.Right => 0,
+			AttackDirection.Left => 0,
+			AttackDirection.Up => -Mathf.Pi / 2,
+			AttackDirection.Down => Mathf.Pi / 2,
+			_ => 0
+		};
+	}
+	
+	private Vector2 GetBasePositionForDirection(AttackDirection direction)
+	{
+		return direction switch
+		{
+			AttackDirection.Right => new Vector2(Mathf.Abs(WeaponSpriteOffset.X), WeaponSpriteOffset.Y),
+			AttackDirection.Left => new Vector2(-Mathf.Abs(WeaponSpriteOffset.X), WeaponSpriteOffset.Y),
+			AttackDirection.Up => new Vector2(0, WeaponSpriteOffset.Y - 4),
+			AttackDirection.Down => new Vector2(0, -WeaponSpriteOffset.Y + 8),
+			_ => WeaponSpriteOffset
+		};
+	}
+	
+	private Vector2 GetLungeDirectionForDirection(AttackDirection direction)
+	{
+		return direction switch
+		{
+			AttackDirection.Right => Vector2.Right,
+			AttackDirection.Left => Vector2.Left,
+			AttackDirection.Up => Vector2.Up,
+			AttackDirection.Down => Vector2.Down,
+			_ => Vector2.Right
+		};
 	}
 
 	private void PlayAttackAnimation(AttackDirection direction)
@@ -367,6 +449,9 @@ public partial class MeleeWeapon : Node2D
 		IsAttacking = false;
 		_currentPhase = AttackPhase.None;
 		DeactivateHitbox();
+		
+		// Stop swing animation
+		_swingTween?.Kill();
 		
 		// Reset weapon sprite to default position
 		if (_weaponSprite != null)
